@@ -2,5 +2,13 @@
   "framework": "nextjs",
   "buildCommand": "next build",
   "devCommand": "next dev",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/portal-mecanico", "destination": "/portal-mecanico.html" },
+    { "source": "/portal-cliente", "destination": "/portal-cliente.html" },
+    { "source": "/portal-agendamento", "destination": "/portal-agendamento.html" },
+    { "source": "/portal-fornecedor", "destination": "/portal-fornecedor.html" },
+    { "source": "/portal-estoque", "destination": "/portal-estoque.html" },
+    { "source": "/portal-admin", "destination": "/portal-admin.html" }
+  ]
 }
