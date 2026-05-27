@@ -3,14 +3,13 @@ import { useEffect } from 'react'
 
 export default function Page() {
   useEffect(() => {
-    window.location.replace('/api/portal-fornecedor')
+    const params = window.location.search
+    window.location.replace('https://raique1993.github.io/mecani-ai-portais/portal-fornecedor.html' + params)
   }, [])
   return (
-    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0a0a0a',color:'#fff',fontFamily:'sans-serif'}}>
-      <div style={{textAlign:'center'}}>
-        <div style={{fontSize:40,marginBottom:16}}>🔧</div>
-        <p style={{fontSize:16,color:'#888'}}>Carregando Portal do Fornecedor...</p>
-      </div>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0a0a0a',color:'#fff',fontFamily:'sans-serif',flexDirection:'column',gap:16}}>
+      <div style={{fontSize:48}}>🔧</div>
+      <div style={{fontSize:16,color:'#888'}}>Redirecionando para Portal do Fornecedor...</div>
     </div>
   )
 }
