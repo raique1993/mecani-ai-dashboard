@@ -1,15 +1,15 @@
 'use client'
 import { useEffect } from 'react'
 
-export default function portal-adminPage() {
+export default function Page() {
   useEffect(() => {
-    window.location.href = '/portal-admin.html'
+    window.location.replace('/api/portal-admin')
   }, [])
   return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0a0a0a',color:'#fff',fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontSize:40,marginBottom:16}}>🔧</div>
-        <div style={{fontSize:16}}>Carregando Admin...</div>
+        <p style={{fontSize:16,color:'#888'}}>Carregando Admin Mecani.AI...</p>
       </div>
     </div>
   )
