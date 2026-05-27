@@ -1,15 +1,15 @@
 'use client'
 import { useEffect } from 'react'
 
-export default function portal-estoquePage() {
+export default function Page() {
   useEffect(() => {
-    window.location.href = '/portal-estoque.html'
+    window.location.replace('/api/portal-estoque')
   }, [])
   return (
     <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',background:'#0a0a0a',color:'#fff',fontFamily:'sans-serif'}}>
       <div style={{textAlign:'center'}}>
         <div style={{fontSize:40,marginBottom:16}}>🔧</div>
-        <div style={{fontSize:16}}>Carregando Controle de Estoque...</div>
+        <p style={{fontSize:16,color:'#888'}}>Carregando Controle de Estoque...</p>
       </div>
     </div>
   )
