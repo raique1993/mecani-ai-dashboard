@@ -5,6 +5,18 @@
   "installCommand": "npm install",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://tcjynyfusqkqtdohnyzq.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_gNJhc4WCS9MnnmDAL2T6Vg_AQ71_Vid"
-  }
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_gNJhc4WCS9MnnmDAL2T6Vg_AQ71_Vid",
+    "NEXT_PUBLIC_APP_URL": "https://app.mecaniia.com.br",
+    "NEXT_PUBLIC_PORTAIS_URL": "https://mecaniia.com.br"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {"key": "X-Frame-Options", "value": "DENY"},
+        {"key": "X-Content-Type-Options", "value": "nosniff"},
+        {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}
+      ]
+    }
+  ]
 }
