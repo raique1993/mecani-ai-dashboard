@@ -341,14 +341,14 @@ function AbaConfig() {
   const [saved,setSaved] = useState(false);
 
   useEffect(()=>{
-    supabase.from("tenants").select("*").eq("id",""a1b2c3d4-0000-0000-0000-000000000001"").single().then(({data})=>{
+    supabase.from("tenants").select("*").eq("id", TENANT_ID).single().then(({data})=>{
       if(data){setTenant(data);setForm({nome_oficina:data.nome_oficina||"",telefone:data.telefone||"",telefone_dono:data.telefone_dono||"",meta_page_id:data.meta_page_id||"",meta_access_token:data.meta_access_token||"",instagram_id:data.instagram_id||"",vagas_simultaneas:data.vagas_simultaneas||5});}
     });
   },[]);
 
   const salvar=async()=>{
     setSaving(true);
-    await supabase.from("tenants").update(form).eq("id",""a1b2c3d4-0000-0000-0000-000000000001"");
+    await supabase.from("tenants").update(form).eq("id", TENANT_ID);
     setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
   };
 
