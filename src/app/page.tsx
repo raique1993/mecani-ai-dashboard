@@ -10,7 +10,7 @@ const supabase = createClient(
 
 // ── Tipos ─────────────────────────────────────────────────────
 type StatusOS = "EM_DIAGNOSTICO"|"AGUARDANDO_APROVACAO"|"APROVADO"|"EM_EXECUCAO"|"AGUARDANDO_PECA"|"CONCLUIDO"|"CANCELADO";
-type Aba = "kanban"|"social"|"financeiro"|"clientes"|"config";
+type Aba = "kanban"|"social"|"financeiro"|"clientes"|"agendamentos"|"nps"|"config";
 
 interface OS { id:string; numero_os:number; placa_veiculo:string; modelo_veiculo:string|null; nome_cliente:string; telefone_cliente:string; relato_inicial:string|null; diagnostico_tecnico:string|null; status:StatusOS; valor_total:number|null; valor_total_pecas:number|null; valor_total_servicos:number|null; created_at:string; concluido_at:string|null; }
 interface SocialPost { id:string; tipo:string; status:string; midia_url:string; legenda_final:string|null; legenda_ia:string|null; hashtags:string[]; estilo:string; publicado_at:string|null; created_at:string; instagram_post_id:string|null; facebook_post_id:string|null; }
@@ -339,14 +339,14 @@ function AbaConfig() {
   const [saved,setSaved] = useState(false);
 
   useEffect(()=>{
-    supabase.from("tenants").select("*").eq("id","a1b2c3d4-0000-0000-0000-000000000001").single().then(({data})=>{
+    supabase.from("tenants").select("*").eq("id","process.env.NEXT_PUBLIC_TENANT_ID || "a1b2c3d4-0000-0000-0000-000000000001"").single().then(({data})=>{
       if(data){setTenant(data);setForm({nome_oficina:data.nome_oficina||"",telefone:data.telefone||"",telefone_dono:data.telefone_dono||"",meta_page_id:data.meta_page_id||"",meta_access_token:data.meta_access_token||"",instagram_id:data.instagram_id||"",vagas_simultaneas:data.vagas_simultaneas||5});}
     });
   },[]);
 
   const salvar=async()=>{
     setSaving(true);
-    await supabase.from("tenants").update(form).eq("id","a1b2c3d4-0000-0000-0000-000000000001");
+    await supabase.from("tenants").update(form).eq("id","process.env.NEXT_PUBLIC_TENANT_ID || "a1b2c3d4-0000-0000-0000-000000000001"");
     setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),2000);
   };
 
@@ -392,6 +392,142 @@ function AbaConfig() {
 // ════════════════════════════════════════════════════════════
 // DASHBOARD PRINCIPAL
 // ════════════════════════════════════════════════════════════
+
+// ── Aba Agendamentos ──────────────────────────────────────────
+function AbaAgendamentos() {
+  const [agendamentos, setAgendamentos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("agendamentos")
+      .select("*")
+      .order("data_agendamento", { ascending: true })
+      .limit(50)
+      .then(({ data }) => { setAgendamentos(data||[]); setLoading(false); });
+  }, []);
+
+  const statusColor: Record<string,string> = {
+    PENDENTE: "#f59e0b", CONFIRMADO: "#22c55e", CANCELADO: "#ef4444",
+    CONCLUIDO: "#6366f1", REAGENDADO: "#8b5cf6"
+  };
+
+  if(loading) return <div style={{textAlign:"center",padding:40,color:"#9ca3af"}}>Carregando...</div>;
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:24}}>
+        {[
+          {label:"Total",val:agendamentos.length,color:"#6366f1"},
+          {label:"Confirmados",val:agendamentos.filter(a=>a.status==="CONFIRMADO").length,color:"#22c55e"},
+          {label:"Pendentes",val:agendamentos.filter(a=>a.status==="PENDENTE").length,color:"#f59e0b"},
+          {label:"Hoje",val:agendamentos.filter(a=>a.data_agendamento?.startsWith(new Date().toISOString().split("T")[0])).length,color:"#ec4899"},
+        ].map(m=>(
+          <div key={m.label} style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,color:m.color}}>{m.val}</div>
+            <div style={{fontSize:12,color:"#6b7280",marginTop:4}}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid #f3f4f6",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontWeight:600,fontSize:14}}>📅 Próximos agendamentos</span>
+        </div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+            <thead><tr style={{background:"#f9fafb"}}>
+              {["Cliente","Telefone","Serviço","Data","Horário","Status"].map(h=>(
+                <th key={h} style={{padding:"10px 14px",textAlign:"left",fontSize:11,fontWeight:600,color:"#6b7280",textTransform:"uppercase",letterSpacing:.5}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {agendamentos.length===0?(
+                <tr><td colSpan={6} style={{textAlign:"center",padding:32,color:"#9ca3af"}}>Nenhum agendamento ainda</td></tr>
+              ):agendamentos.slice(0,20).map(a=>(
+                <tr key={a.id} style={{borderBottom:"1px solid #f3f4f6"}}>
+                  <td style={{padding:"12px 14px",fontWeight:600}}>{a.nome_cliente||"—"}</td>
+                  <td style={{padding:"12px 14px",color:"#6b7280"}}>{a.telefone_cliente||"—"}</td>
+                  <td style={{padding:"12px 14px"}}>{a.servico||"—"}</td>
+                  <td style={{padding:"12px 14px",color:"#6b7280"}}>{a.data_agendamento?new Date(a.data_agendamento+"T12:00").toLocaleDateString("pt-BR"):"—"}</td>
+                  <td style={{padding:"12px 14px",color:"#6b7280"}}>{a.horario||"—"}</td>
+                  <td style={{padding:"12px 14px"}}>
+                    <span style={{padding:"3px 9px",borderRadius:100,fontSize:11,fontWeight:700,background:`${statusColor[a.status||"PENDENTE"]}18`,color:statusColor[a.status||"PENDENTE"]}}>
+                      {a.status||"PENDENTE"}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Aba NPS ──────────────────────────────────────────────────
+function AbaNPS() {
+  const [avaliacoes, setAvaliacoes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.from("avaliacoes_nps")
+      .select("*")
+      .eq("respondido", true)
+      .order("created_at", { ascending: false })
+      .limit(50)
+      .then(({ data }) => { setAvaliacoes(data||[]); setLoading(false); });
+  }, []);
+
+  const media = avaliacoes.length ? 
+    (avaliacoes.reduce((a,n)=>a+(n.nota||0),0)/avaliacoes.length).toFixed(1) : "—";
+  const promotores = avaliacoes.filter(a=>a.nota>=9).length;
+  const detratores = avaliacoes.filter(a=>a.nota<=6).length;
+  const npsScore = avaliacoes.length ? 
+    Math.round(((promotores-detratores)/avaliacoes.length)*100) : 0;
+
+  if(loading) return <div style={{textAlign:"center",padding:40,color:"#9ca3af"}}>Carregando...</div>;
+
+  return (
+    <div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:24}}>
+        {[
+          {label:"Nota média",val:media,color:"#22c55e"},
+          {label:"NPS Score",val:npsScore,color:"#6366f1"},
+          {label:"Promotores",val:promotores,color:"#22c55e"},
+          {label:"Detratores",val:detratores,color:"#ef4444"},
+        ].map(m=>(
+          <div key={m.label} style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:12,padding:"16px 14px",textAlign:"center"}}>
+            <div style={{fontSize:26,fontWeight:800,color:m.color}}>{m.val}</div>
+            <div style={{fontSize:12,color:"#6b7280",marginTop:4}}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{background:"#fff",border:"1px solid #e5e7eb",borderRadius:14,overflow:"hidden"}}>
+        <div style={{padding:"14px 18px",borderBottom:"1px solid #f3f4f6"}}>
+          <span style={{fontWeight:600,fontSize:14}}>⭐ Avaliações recentes</span>
+        </div>
+        {avaliacoes.length===0?(
+          <div style={{textAlign:"center",padding:32,color:"#9ca3af"}}>Nenhuma avaliação ainda — o NPS é enviado automaticamente 72h após a conclusão da OS</div>
+        ):avaliacoes.slice(0,15).map(a=>(
+          <div key={a.id} style={{padding:"14px 18px",borderBottom:"1px solid #f3f4f6",display:"flex",alignItems:"flex-start",gap:14}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:a.nota>=9?"#dcfce7":a.nota>=7?"#fef9c3":"#fee2e2",
+              display:"flex",alignItems:"center",justifyContent:"center",
+              fontSize:16,fontWeight:800,color:a.nota>=9?"#16a34a":a.nota>=7?"#ca8a04":"#dc2626",flexShrink:0}}>
+              {a.nota}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,fontWeight:600,marginBottom:3}}>{a.nome_cliente||"Cliente"}</div>
+              {a.comentario&&<div style={{fontSize:13,color:"#6b7280",fontStyle:"italic"}}>"{a.comentario}"</div>}
+              <div style={{fontSize:11,color:"#9ca3af",marginTop:4}}>{new Date(a.created_at).toLocaleDateString("pt-BR")}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function Dashboard() {
   const [aba,setAba] = useState<Aba>("kanban");
 
@@ -439,6 +575,8 @@ export default function Dashboard() {
           {aba==="social"&&<AbaSocial/>}
           {aba==="financeiro"&&<AbaFinanceiro/>}
           {aba==="clientes"&&<AbaClientes/>}
+          {aba==="agendamentos"&&<AbaAgendamentos/>}
+          {aba==="nps"&&<AbaNPS/>}
           {aba==="config"&&<AbaConfig/>}
         </div>
       </div>
